@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: microservices
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+      - name: gateway
+        image: ghcr.io/YOUR-USERNAME/gateway:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: AUTH_SERVICE
+          value: "http://auth-service"
+        - name: PRODUCT_SERVICE
+          value: "http://product-service"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: microservices
+spec:
+  selector:
+    app: gateway
+  ports:
+  - port: 80
+    targetPort: 8080
+  type: LoadBalancer
