@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  postgres-auth:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: authdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth-data:/var/lib/postgresql/data
+
+  postgres-product:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: productdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - product-data:/var/lib/postgresql/data
+
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8001:8001"
+    environment:
+      DB_HOST: postgres-auth
+      DB_NAME: authdb
+      DB_USER: postgres
+      DB_PASSWORD: password
+      SECRET_KEY: your-secret-key
+    depends_on:
+      - postgres-auth
+
+  product-service:
+    build: ./product-service
+    ports:
+      - "8002:8002"
+    environment:
+      DB_HOST: postgres-product
+      DB_NAME: productdb
+      DB_USER: postgres
+      DB_PASSWORD: password
+      SECRET_KEY: your-secret-key
+    depends_on:
+      - postgres-product
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "8080:8080"
+    environment:
+      AUTH_SERVICE: http://auth-service:8001
+      PRODUCT_SERVICE: http://product-service:8002
+    depends_on:
+      - auth-service
+      - product-service
+
+volumes:
+  auth-data:
+  product-data:
